@@ -1,25 +1,17 @@
 # Collecting a card payment on mobile (iOS & Android)
 Charging a card consists of three steps:
 
-**🕵️ Authentication -** Card information is sent to the card issuer for verification. Some cards may require the cardholder to strongly authenticate the purchase through protocols like [3D Secure](https://stripe.com/ie/guides/3d-secure-2). 
+**🕵️ Authentication -** Card information is sent to the card issuer for verification. Some cards may require the cardholder to strongly authenticate the purchase through protocols like [3D Secure](https://stripe.com/ie/guides/3d-secure-2).
 
-**💁 Authorization -** Funds from the customer's account are put on hold but not transferred to the merchant. 
+**💁 Authorization -** Funds from the customer's account are put on hold but not transferred to the merchant.
 
 **💸 Capture -** Funds are transferred to the merchant's account and the payment is complete.
 
 The [Payment Intents API](https://stripe.com/docs/api/payment_intents) abstracts away these three stages by handling all steps of the process through the [confirm method](https://stripe.com/docs/api/payment_intents/confirm). After you create a PaymentIntent, call confirm to authenticate, authorize, and capture the funds in one API call.
 
-**Demo**
+There are two implementations depending on whether you want to use webhooks for any post-payment process:
 
-Try out the sample by running it in testmode (using your testmode API key) -- use `4242424242424242` as a test card number with any CVC code + a future expiration date.
-
-Use the `4000000000003220` test card number to trigger a 3D Secure challenge flow.
-
-Read more about testing on Stripe at https://stripe.com/docs/testing.
-
-There are two implementations depending on whether you want to use webhooks for any post-payment process: 
-
-* **[/using-webhooks](/using-webhooks)** Confirms the payment on the client and requires using webhooks or other async event handlers for any post-payment logic (e.g. sending email receipts, fulfilling orders). 
+* **[/using-webhooks](/using-webhooks)** Confirms the payment on the client and requires using webhooks or other async event handlers for any post-payment logic (e.g. sending email receipts, fulfilling orders).
 * **[/without-webhooks](/without-webhooks)** Confirms the payment on the server and allows you to run any post-payment logic right after.
 
 This sample shows:
@@ -31,20 +23,26 @@ This sample shows:
 ↪️ **Using webhooks to respond to a hold being placed on the card.** Confirming the payment on the client requires using webhooks for any follow up actions, like emailing a receipt. | ✅ | ❌ |
 🏦 **Easily scalable to other payment methods.** Webhooks enable easy adoption of other asynchroneous payment methods like direct debits and push-based payment flows. | ✅ | ❌ |
 
+## How to run
+This sample includes 5 server implementations in Node, Ruby, Python, Java, and PHP for the two integration types: [using-webhooks](/using-webhooks) and [without-webhooks](/without-webhooks). For each integration type, there are 4 mobile client implementations, in Swift (iOS), Objective-C (iOS), Kotlin (Android), and Java (Android).
 
-## How to run locally
-This sample includes 5 server implementations in Node, Ruby, Python, Java, and PHP for the two integration types: [using-webhooks](/using-webhooks) and [without-webhooks](/without-webhooks). 
-
-If you want to run the sample locally copy the .env.example file to your own .env file: 
+To run a sample server locally, first copy the .env.example file to your own .env file:
 
 ```
 cp .env.example .env
 ```
 
-Then follow the instructions in the server directory to run.
+You will need a Stripe account with its own set of [API keys](https://stripe.com/docs/development#api-keys). Enter your Stripe secret API key in the .env file.
 
-You will need a Stripe account with its own set of [API keys](https://stripe.com/docs/development#api-keys).
+Then, choose a sample server, and follow the instructions in the server's README to run locally.
 
+Next, choose a client app, and follow the instruction in the app's README to run.
+
+When the app is running, use `4242424242424242` as a test card number with any CVC code + a future expiration date.
+
+Use the `4000000000003220` test card number to trigger a 3D Secure challenge flow.
+
+Read more about testing on Stripe at https://stripe.com/docs/testing.
 
 ## FAQ
 Q: Why did you pick these frameworks?
