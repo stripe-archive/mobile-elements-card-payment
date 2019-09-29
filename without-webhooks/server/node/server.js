@@ -51,7 +51,8 @@ app.post("/pay", async (req, res) => {
         currency: currency,
         payment_method: paymentMethodId,
         confirmation_method: "manual",
-        confirm: true
+        confirm: true,
+        use_stripe_sdk: true
       });
     } else {
       // Confirm the PaymentIntent to place a hold on the card
