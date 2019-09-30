@@ -54,7 +54,8 @@ def pay():
                 currency=data['currency'],
                 payment_method=data['paymentMethodId'],
                 confirmation_method='manual',
-                confirm=True
+                confirm=True,
+                use_stripe_sdk=True
             )
         else:
             # Confirm the PaymentIntent to collect the money

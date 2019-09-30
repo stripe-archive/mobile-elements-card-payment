@@ -1,4 +1,4 @@
-# Taking a card payment on the web
+# Placing a hold
 An [Express server](http://expressjs.com) implementation
 
 ## Requirements

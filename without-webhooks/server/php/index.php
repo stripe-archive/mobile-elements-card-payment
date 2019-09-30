@@ -89,7 +89,8 @@ $app->post('/pay', function(Request $request, Response $response) use ($app)  {
       "currency" => $body->currency,
       "payment_method" => $body->paymentMethodId,
       "confirmation_method" => "manual",
-      "confirm" => true
+      "confirm" => true,
+      "use_stripe_sdk" => true
     ]);
   } else {
     // Confirm the PaymentIntent to collect the money
