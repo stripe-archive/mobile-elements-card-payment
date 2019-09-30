@@ -1,4 +1,4 @@
-# Placing a hold
+# Taking a card payment on mobile
 
 A [Sinatra](http://sinatrarb.com/) implementation.
 
