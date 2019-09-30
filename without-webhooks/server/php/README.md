@@ -1,4 +1,4 @@
-# Placing a hold
+# Taking a card payment on mobile
 
 ## Requirements
 * PHP >= 7.1.3
