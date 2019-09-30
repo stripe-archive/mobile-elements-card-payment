@@ -1,4 +1,4 @@
-# Taking a card payment on the web
+# Placing a hold
 
 ## Requirements
 * PHP >= 7.1.3
