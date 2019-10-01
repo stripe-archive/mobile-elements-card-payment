@@ -49,13 +49,15 @@ def pay():
             order_amount = calculate_order_amount(data['items'])
 
             # Create a new PaymentIntent for the order
+            # If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
+            # to take advantage of new authentication features in mobile SDKs.
             intent = stripe.PaymentIntent.create(
                 amount=order_amount,
                 currency=data['currency'],
                 payment_method=data['paymentMethodId'],
                 confirmation_method='manual',
                 confirm=True,
-                use_stripe_sdk=True
+                use_stripe_sdk=data['useStripeSdk']
             )
         else:
             # Confirm the PaymentIntent to collect the money

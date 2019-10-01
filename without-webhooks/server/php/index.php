@@ -84,13 +84,15 @@ $app->post('/pay', function(Request $request, Response $response) use ($app)  {
 
   if($body->paymentIntentId == null) {
     // Create new PaymentIntent
+    // If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
+    // to take advantage of new authentication features in mobile SDKs
     $intent = \Stripe\PaymentIntent::create([
       "amount" => calculateOrderAmount($body->items),
       "currency" => $body->currency,
       "payment_method" => $body->paymentMethodId,
       "confirmation_method" => "manual",
       "confirm" => true,
-      "use_stripe_sdk" => true
+      "use_stripe_sdk" => $body->useStripeSdk
     ]);
   } else {
     // Confirm the PaymentIntent to collect the money
