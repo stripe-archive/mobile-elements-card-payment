@@ -121,7 +121,7 @@ class CheckoutViewController: UIViewController {
                     self.displayAlert(title: "Payment canceled", message: error?.localizedDescription ?? "")
                     break
                 case .succeeded:
-                    self.displayAlert(title: "Payment canceled", message: paymentIntent?.description ?? "", restartDemo: true)
+                    self.displayAlert(title: "Payment succeeded", message: paymentIntent?.description ?? "", restartDemo: true)
                     break
                 @unknown default:
                     fatalError()
