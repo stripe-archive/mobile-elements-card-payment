@@ -144,9 +144,8 @@ public class Server {
                     PaymentIntentCreateParams createParams = new PaymentIntentCreateParams.Builder()
                             .setCurrency(postBody.getCurrency()).setAmount(new Long(orderAmount))
                             .setPaymentMethod(postBody.getPaymentMethodId())
-                            .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL)
-                            .setConfirm(true).
-                            .setUseStripeSdk(true).build();
+                            .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL).setConfirm(true)
+                            .build();
                     // Create a PaymentIntent with the order amount and currency
                     intent = PaymentIntent.create(createParams);
                 } else {
