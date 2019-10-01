@@ -99,13 +99,13 @@ class CheckoutViewController: UIViewController {
             }
             if let paymentMethodId = paymentMethod?.stripeId {
                 print("Created PaymentMethod")
-                self?.confirm(paymentMethodId: paymentMethodId)
+                self?.pay(withPaymentMethod: paymentMethodId)
             }
         }
     }
 
-    // Confirm a payment method or payment intent
-    func confirm(paymentMethodId: String? = nil, paymentIntentId: String? = nil) {
+    // Create or confirm a PaymentIntent on the server
+    func pay(withPaymentMethod paymentMethodId: String? = nil, withPaymentIntent paymentIntentId: String? = nil) {
         // Create a PaymentIntent on the server
         let url = URL(string: BackendUrl + "pay")!
         var json: [String: Any] = [:]
@@ -173,7 +173,7 @@ class CheckoutViewController: UIViewController {
                         // to your client.
                         if let paymentIntent = paymentIntent, paymentIntent.status == STPPaymentIntentStatus.requiresConfirmation {
                             print("Re-confirming PaymentIntent after handling action")
-                            self?.confirm(paymentIntentId: paymentIntent.stripeId)
+                            self?.pay(withPaymentIntent: paymentIntent.stripeId)
                         }
                         else {
                             self?.displayAlert(title: "Payment succeeded", message: paymentIntent?.description ?? "", restartDemo: true)
