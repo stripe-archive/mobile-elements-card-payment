@@ -78,7 +78,6 @@ class CheckoutViewController: UIViewController {
                 let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
                 let stripePublicKey = json["publicKey"] as? String else {
-                    let message = error?.localizedDescription ?? "Failed to decode response from server."
                     self?.displayAlert(title: "Error loading page", message: message)
                     return
             }
