@@ -141,7 +141,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         // Request failed
         if (error != nil || httpResponse.statusCode != 200) {
-            NSString *message = error.localizedDescription ?: @"";
             [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
         }
         else {
