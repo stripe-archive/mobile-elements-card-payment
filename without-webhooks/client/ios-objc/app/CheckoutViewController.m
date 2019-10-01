@@ -172,7 +172,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                                 break;
                             }
                             case STPPaymentHandlerActionStatusCanceled: {
-                                NSString *message = handleActionError.localizedDescription ?: @"";
                                 [self displayAlertWithTitle:@"Payment canceled" message:handleActionError.localizedDescription ?: @"" restartDemo:NO];
                                 break;
                             }
