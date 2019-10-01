@@ -58,6 +58,22 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     [self loadPage];
 }
 
+- (void)displayAlertWithTitle:(NSString *)title message:(NSString *)message restartDemo:(BOOL)restartDemo {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+        if (restartDemo) {
+            [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self.cardTextField clear];
+                [self loadPage];
+            }]];
+        }
+        else {
+            [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
+        }
+        [self presentViewController:alert animated:YES completion:nil];
+    });
+}
+
 - (void)loadPage {
     // Load Stripe key from the server
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@stripe-key", BackendUrl]];
@@ -70,7 +86,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         if (error != nil || httpResponse.statusCode != 200 || json[@"publicKey"] == nil) {
             NSString *message = error.localizedDescription ?: @"";
-            [self displayAlertWithTitle:@"Error loading page" message:message];
+            [self displayAlertWithTitle:@"Error loading page" message:message restartDemo:NO];
         }
         else {
             NSLog(@"Loaded Stripe key");
@@ -81,14 +97,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     [task resume];
 }
 
-- (void)displayAlertWithTitle:(NSString *)title message:(NSString *)message {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
-        [self presentViewController:alert animated:YES completion:nil];
-    });
-}
-
 - (void)pay {
     // Collect card details on the client
     STPPaymentMethodCardParams *cardParams = self.cardTextField.cardParams;
@@ -97,7 +105,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         // Create PaymentMethod failed
         if (createError != nil) {
             NSString *message = createError.localizedDescription ?: @"";
-            [self displayAlertWithTitle:@"Payment failed" message:message];
+            [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
         }
         else if (paymentMethod != nil) {
             // Create a PaymentIntent on the server with a PaymentMethod
@@ -136,7 +144,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         // Request failed
         if (error != nil || httpResponse.statusCode != 200) {
             NSString *message = error.localizedDescription ?: @"";
-            [self displayAlertWithTitle:@"Payment failed" message:message];
+            [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
         }
         else {
             NSNumber *requiresAction = json[@"requiresAction"];
@@ -144,24 +152,17 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
             NSString *payError = json[@"error"];
             // Payment failed
             if (payError != nil) {
-                [self displayAlertWithTitle:@"Payment failed" message:payError];
+                [self displayAlertWithTitle:@"Payment failed" message:payError restartDemo:NO];
             }
             // Payment succeeded
             else if (clientSecret != nil && (requiresAction == nil || [requiresAction isEqualToNumber:@NO])) {
                 [[STPAPIClient sharedClient] retrievePaymentIntentWithClientSecret:clientSecret completion:^(STPPaymentIntent *paymentIntent, NSError *retrieveError) {
                         if (paymentIntent != nil) {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Payment succeeded" message:paymentIntent.description preferredStyle:UIAlertControllerStyleAlert];
-                                [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                                    [self.cardTextField clear];
-                                    [self loadPage];
-                                }]];
-                                [self presentViewController:alert animated:YES completion:nil];
-                            });
+                            [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description restartDemo:YES];
                         }
                         else {
                             NSString *message = retrieveError.localizedDescription ?: @"";
-                            [self displayAlertWithTitle:@"Payment failed" message:message];
+                            [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
                         }
                 }];
             }
@@ -172,12 +173,12 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                         switch (status) {
                             case STPPaymentHandlerActionStatusFailed: {
                                 NSString *message = handleActionError.localizedDescription ?: @"";
-                                [self displayAlertWithTitle:@"Payment failed" message:message];
+                                [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
                                 break;
                             }
                             case STPPaymentHandlerActionStatusCanceled: {
                                 NSString *message = handleActionError.localizedDescription ?: @"";
-                                [self displayAlertWithTitle:@"Payment canceled" message:message];
+                                [self displayAlertWithTitle:@"Payment canceled" message:message restartDemo:NO];
                                 break;
                             }
                             case STPPaymentHandlerActionStatusSucceeded: {
@@ -191,14 +192,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                                     [self confirmPaymentMethod:nil orPaymentIntent:paymentIntent.stripeId];
                                 }
                                 else {
-                                    dispatch_async(dispatch_get_main_queue(), ^{
-                                        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Payment succeeded" message:paymentIntent.description preferredStyle:UIAlertControllerStyleAlert];
-                                        [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                                            [self.cardTextField clear];
-                                            [self loadPage];
-                                        }]];
-                                        [self presentViewController:alert animated:YES completion:nil];
-                                    });
+                                    [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description restartDemo:YES];
                                 }
                                 break;
                             }
