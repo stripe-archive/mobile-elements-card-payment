@@ -85,7 +85,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         if (error != nil || httpResponse.statusCode != 200 || json[@"publicKey"] == nil) {
-            NSString *message = error.localizedDescription ?: @"";
             [self displayAlertWithTitle:@"Error loading page" message:message restartDemo:NO];
         }
         else {
