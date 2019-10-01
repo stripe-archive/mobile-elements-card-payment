@@ -51,6 +51,22 @@ class CheckoutViewController: UIViewController {
         loadPage()
     }
 
+    func displayAlert(title: String, message: String, restartDemo: Bool = false) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            if restartDemo {
+                alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
+                    self.cardTextField.clear()
+                    self.loadPage()
+                })
+            }
+            else {
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+            }
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+
     func loadPage() {
         // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
         let url = URL(string: BackendUrl + "create-payment-intent")!
@@ -71,11 +87,8 @@ class CheckoutViewController: UIViewController {
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
                 let clientSecret = json["clientSecret"] as? String,
                 let stripePublicKey = json["publicKey"] as? String else {
-                    DispatchQueue.main.async {
-                        let alert = UIAlertController(title: "Error loading page", message: error?.localizedDescription ?? "Failed to decode response from server.", preferredStyle: .alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                        self?.present(alert, animated: true, completion: nil)
-                    }
+                    let message = error?.localizedDescription ?? "Failed to decode response from server."
+                    self?.displayAlert(title: "Error loading page", message: message)
                     return
             }
             print("Created PaymentIntent")
@@ -102,22 +115,13 @@ class CheckoutViewController: UIViewController {
             DispatchQueue.main.async {
                 switch (status) {
                 case .failed:
-                    let alert = UIAlertController(title: "Payment failed", message: error?.localizedDescription ?? "", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                    self.present(alert, animated: true, completion: nil)
+                    self.displayAlert(title: "Payment failed", message: error?.localizedDescription ?? "")
                     break
                 case .canceled:
-                    let alert = UIAlertController(title: "Payment canceled", message: error?.localizedDescription ?? "", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                    self.present(alert, animated: true, completion: nil)
+                    self.displayAlert(title: "Payment canceled", message: error?.localizedDescription ?? "")
                     break
                 case .succeeded:
-                    let alert = UIAlertController(title: "Payment succeeded", message: paymentIntent?.description ?? "", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
-                        self.cardTextField.clear()
-                        self.loadPage()
-                    })
-                    self.present(alert, animated: true, completion: nil)
+                    self.displayAlert(title: "Payment canceled", message: paymentIntent?.description ?? "", restartDemo: true)
                     break
                 @unknown default:
                     fatalError()
