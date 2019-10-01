@@ -55,7 +55,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         [stackView.topAnchor constraintEqualToSystemSpacingBelowAnchor:self.view.topAnchor multiplier:2],
     ]];
 
-    [self loadPage];
+    [self startCheckout];
 }
 
 - (void)displayAlertWithTitle:(NSString *)title message:(NSString *)message restartDemo:(BOOL)restartDemo {
@@ -64,7 +64,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         if (restartDemo) {
             [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                 [self.cardTextField clear];
-                [self loadPage];
+                [self startCheckout];
             }]];
         }
         else {
@@ -74,7 +74,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     });
 }
 
-- (void)loadPage {
+- (void)startCheckout {
     // Load Stripe key from the server
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@stripe-key", BackendUrl]];
     NSMutableURLRequest *request = [[NSURLRequest requestWithURL:url] mutableCopy];
@@ -84,13 +84,13 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         NSError *error = requestError;
         NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        if (error != nil || httpResponse.statusCode != 200 || json[@"publicKey"] == nil) {
+        if (error != nil || httpResponse.statusCode != 200 || json[@"publishableKey"] == nil) {
             [self displayAlertWithTitle:@"Error loading page" message:error.localizedDescription ?: @"" restartDemo:NO];
         }
         else {
             NSLog(@"Loaded Stripe key");
-            NSString *stripePublicKey = json[@"publicKey"];
-            [Stripe setDefaultPublishableKey:stripePublicKey];
+            NSString *publishableKey = json[@"publishableKey"];
+            [Stripe setDefaultPublishableKey:publishableKey];
         }
     }];
     [task resume];
@@ -108,12 +108,12 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         else if (paymentMethod != nil) {
             // Create a PaymentIntent on the server with a PaymentMethod
             NSLog(@"Created PaymentMethod");
-            [self confirmPaymentMethod:paymentMethod.stripeId orPaymentIntent:nil];
+            [self payWithPaymentMethod:paymentMethod.stripeId orPaymentIntent:nil];
         }
     }];
 }
 
-- (void)confirmPaymentMethod:(NSString *)paymentMethodId orPaymentIntent:(NSString *)paymentIntentId {
+- (void)payWithPaymentMethod:(NSString *)paymentMethodId orPaymentIntent:(NSString *)paymentIntentId {
     NSDictionary *json = @{};
     if (paymentMethodId != nil) {
         json = @{
@@ -183,7 +183,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                                 // to your client.
                                 if (paymentIntent != nil && paymentIntent.status == STPPaymentIntentStatusRequiresConfirmation) {
                                     NSLog(@"Re-confirming PaymentIntent after handling action");
-                                    [self confirmPaymentMethod:nil orPaymentIntent:paymentIntent.stripeId];
+                                    [self payWithPaymentMethod:nil orPaymentIntent:paymentIntent.stripeId];
                                 }
                                 else {
                                     [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description restartDemo:YES];
