@@ -145,14 +145,7 @@ class CheckoutViewController: UIViewController {
             }
             // Payment succeeded, no additional action required
             else if clientSecret != nil && (requiresAction == nil || requiresAction == false) {
-                STPAPIClient.shared().retrievePaymentIntent(withClientSecret: clientSecret!) { paymentIntent, retrieveError in
-                    if let paymentIntent = paymentIntent {
-                        self?.displayAlert(title: "Payment succeeded", message: paymentIntent.description, restartDemo: true)
-                    }
-                    else {
-                        self?.displayAlert(title: "Payment failed", message: retrieveError?.localizedDescription ?? "")
-                    }
-                }
+                self?.displayAlert(title: "Payment succeeded", message: clientSecret ?? "", restartDemo: true)
             }
             // Payment requires additional action
             else if clientSecret != nil && requiresAction == true && self != nil {
