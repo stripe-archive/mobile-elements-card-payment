@@ -48,7 +48,7 @@ class CheckoutViewController: UIViewController {
             view.rightAnchor.constraint(equalToSystemSpacingAfter: stackView.rightAnchor, multiplier: 2),
             stackView.topAnchor.constraint(equalToSystemSpacingBelow: view.topAnchor, multiplier: 2),
         ])
-        loadPage()
+        startCheckout()
     }
 
     func displayAlert(title: String, message: String, restartDemo: Bool = false) {
@@ -57,7 +57,7 @@ class CheckoutViewController: UIViewController {
             if restartDemo {
                 alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
                     self.cardTextField.clear()
-                    self.loadPage()
+                    self.startCheckout()
                 })
             }
             else {
@@ -67,7 +67,7 @@ class CheckoutViewController: UIViewController {
         }
     }
 
-    func loadPage() {
+    func startCheckout() {
         // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
         let url = URL(string: BackendUrl + "create-payment-intent")!
         let json: [String: Any] = [
@@ -86,14 +86,14 @@ class CheckoutViewController: UIViewController {
                 let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
                 let clientSecret = json["clientSecret"] as? String,
-                let stripePublicKey = json["publicKey"] as? String else {
+                let publishableKey = json["publishableKey"] as? String else {
                     let message = error?.localizedDescription ?? "Failed to decode response from server."
                     self?.displayAlert(title: "Error loading page", message: message)
                     return
             }
             print("Created PaymentIntent")
             self?.paymentIntentClientSecret = clientSecret
-            Stripe.setDefaultPublishableKey(stripePublicKey)
+            Stripe.setDefaultPublishableKey(publishableKey)
         })
         task.resume()
     }
@@ -112,21 +112,19 @@ class CheckoutViewController: UIViewController {
         // Submit the payment
         let paymentHandler = STPPaymentHandler.shared()
         paymentHandler.confirmPayment(withParams: paymentIntentParams, authenticationContext: self) { (status, paymentIntent, error) in
-            DispatchQueue.main.async {
-                switch (status) {
-                case .failed:
-                    self.displayAlert(title: "Payment failed", message: error?.localizedDescription ?? "")
-                    break
-                case .canceled:
-                    self.displayAlert(title: "Payment canceled", message: error?.localizedDescription ?? "")
-                    break
-                case .succeeded:
-                    self.displayAlert(title: "Payment succeeded", message: paymentIntent?.description ?? "", restartDemo: true)
-                    break
-                @unknown default:
-                    fatalError()
-                    break
-                }
+            switch (status) {
+            case .failed:
+                self.displayAlert(title: "Payment failed", message: error?.localizedDescription ?? "")
+                break
+            case .canceled:
+                self.displayAlert(title: "Payment canceled", message: error?.localizedDescription ?? "")
+                break
+            case .succeeded:
+                self.displayAlert(title: "Payment succeeded", message: paymentIntent?.description ?? "", restartDemo: true)
+                break
+            @unknown default:
+                fatalError()
+                break
             }
         }
     }
