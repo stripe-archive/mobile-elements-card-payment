@@ -113,6 +113,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     }];
 }
 
+// Create or confirm a PaymentIntent on the server
 - (void)payWithPaymentMethod:(NSString *)paymentMethodId orPaymentIntent:(NSString *)paymentIntentId {
     NSDictionary *json = @{};
     if (paymentMethodId != nil) {
