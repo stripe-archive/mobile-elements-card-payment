@@ -22,7 +22,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 
 @property (weak) STPPaymentCardTextField *cardTextField;
 @property (weak) UIButton *payButton;
-@property (strong) NSString *paymentIntentClientSecret;
 
 @end
 
@@ -154,14 +153,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
             }
             // Payment succeeded
             else if (clientSecret != nil && (requiresAction == nil || [requiresAction isEqualToNumber:@NO])) {
-                [[STPAPIClient sharedClient] retrievePaymentIntentWithClientSecret:clientSecret completion:^(STPPaymentIntent *paymentIntent, NSError *retrieveError) {
-                        if (paymentIntent != nil) {
-                            [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description restartDemo:YES];
-                        }
-                        else {
-                            [self displayAlertWithTitle:@"Payment failed" message:retrieveError.localizedDescription ?: @"" restartDemo:NO];
-                        }
-                }];
+                [self displayAlertWithTitle:@"Payment succeeded" message:clientSecret restartDemo:YES];
             }
             // Payment requires additional actions
             else if (clientSecret != nil && [requiresAction isEqualToNumber:@YES]) {
