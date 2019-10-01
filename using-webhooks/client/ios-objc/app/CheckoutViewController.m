@@ -55,7 +55,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         [stackView.topAnchor constraintEqualToSystemSpacingBelowAnchor:self.view.topAnchor multiplier:2],
     ]];
 
-    [self loadPage];
+    [self startCheckout];
 }
 
 - (void)displayAlertWithTitle:(NSString *)title message:(NSString *)message restartDemo:(BOOL)restartDemo {
@@ -64,7 +64,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         if (restartDemo) {
             [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
                 [self.cardTextField clear];
-                [self loadPage];
+                [self startCheckout];
             }]];
         }
         else {
@@ -74,7 +74,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     });
 }
 
-- (void)loadPage {
+- (void)startCheckout {
     // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@create-payment-intent", BackendUrl]];
     NSDictionary *json = @{
@@ -98,8 +98,8 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         else {
             NSLog(@"Created PaymentIntent");
             self.paymentIntentClientSecret = json[@"clientSecret"];
-            NSString *stripePublicKey = json[@"publicKey"];
-            [Stripe setDefaultPublishableKey:stripePublicKey];
+            NSString *publishableKey = json[@"publishableKey"];
+            [Stripe setDefaultPublishableKey:publishableKey];
         }
     }];
     [task resume];
@@ -131,7 +131,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                     break;
                 }
                 case STPPaymentHandlerActionStatusSucceeded: {
-                    [self displayAlertWithTitle:@"Payment succeeded" message:error.localizedDescription ?: @"" restartDemo:YES];
+                    [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description ?: @"" restartDemo:YES];
                     break;
                 }
                 default:
