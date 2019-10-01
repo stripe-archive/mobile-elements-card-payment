@@ -161,7 +161,7 @@ class CheckoutViewController: UIViewController {
                     switch (status) {
                     case .failed:
                         let message = handleActionError?.localizedDescription ?? ""
-                        self?.displayAlert(title: "Payment failed", message: message)
+                        self?.displayAlert(title: "Payment failed", message: handleActionError?.localizedDescription ?? "")
                         break
                     case .canceled:
                         let message = handleActionError?.localizedDescription ?? ""
