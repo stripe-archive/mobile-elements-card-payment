@@ -83,7 +83,7 @@ $app->post('/pay', function(Request $request, Response $response) use ($app)  {
   $body = json_decode($request->getBody());
 
   if($body->paymentIntentId == null) {
-    // Create new PaymentIntent
+    // Create new PaymentIntent with a payment method ID from the client.
     // If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
     // to take advantage of new authentication features in mobile SDKs
     $intent = \Stripe\PaymentIntent::create([
@@ -94,10 +94,13 @@ $app->post('/pay', function(Request $request, Response $response) use ($app)  {
       "confirm" => true,
       "use_stripe_sdk" => $body->useStripeSdk
     ]);
+    // After create, if the PaymentIntent's status is succeeded, fulfill the order.
   } else {
-    // Confirm the PaymentIntent to collect the money
+    // Confirm the PaymentIntent to finalize payment after handling a required action
+    // on the client.
     $intent = \Stripe\PaymentIntent::retrieve($body->paymentIntentId);
     $intent->confirm();
+    // After confirm, if the PaymentIntent's status is succeeded, fulfill the order.
   }
 
   $responseBody = generateResponse($intent, $logger);
