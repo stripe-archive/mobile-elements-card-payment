@@ -150,7 +150,6 @@ class CheckoutViewController: UIViewController {
                         self?.displayAlert(title: "Payment succeeded", message: paymentIntent.description, restartDemo: true)
                     }
                     else {
-                        let message = retrieveError?.localizedDescription ?? ""
                         self?.displayAlert(title: "Payment failed", message: message)
                     }
                 }
