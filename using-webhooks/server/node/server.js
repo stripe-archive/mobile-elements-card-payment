@@ -43,7 +43,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
   // Send public key and PaymentIntent details to client
   res.send({
-    publicKey: process.env.STRIPE_PUBLIC_KEY,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
     clientSecret: paymentIntent.client_secret
   });
 });
