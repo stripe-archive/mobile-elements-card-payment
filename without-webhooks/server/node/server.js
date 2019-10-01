@@ -51,7 +51,7 @@ app.post("/pay", async (req, res) => {
   try {
     let intent;
     if (!paymentIntentId) {
-      // Create new PaymentIntent with a payment method ID from the client.
+      // Create new PaymentIntent with a PaymentMethod ID from the client.
       // If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
       // to take advantage of new authentication features in mobile SDKs.
       intent = await stripe.paymentIntents.create({
