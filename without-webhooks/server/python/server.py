@@ -18,9 +18,11 @@ load_dotenv(find_dotenv())
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 stripe.api_version = os.getenv('STRIPE_API_VERSION')
 
-static_dir = str(os.path.abspath(os.path.join(__file__ , "..", os.getenv("STATIC_DIR"))))
+static_dir = str(os.path.abspath(os.path.join(
+    __file__, "..", os.getenv("STATIC_DIR"))))
 app = Flask(__name__, static_folder=static_dir,
             static_url_path="", template_folder=static_dir)
+
 
 @app.route('/', methods=['GET'])
 def get_example():
@@ -48,7 +50,7 @@ def pay():
         if "paymentIntentId" not in data:
             order_amount = calculate_order_amount(data['items'])
 
-            # Create a new PaymentIntent for the order
+            # Create new PaymentIntent with a payment method ID from the client.
             # If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
             # to take advantage of new authentication features in mobile SDKs.
             intent = stripe.PaymentIntent.create(
@@ -59,9 +61,12 @@ def pay():
                 confirm=True,
                 use_stripe_sdk=data['useStripeSdk']
             )
+            # After create, if the PaymentIntent's status is succeeded, fulfill the order.
         else:
-            # Confirm the PaymentIntent to collect the money
+            # Confirm the PaymentIntent to finalize payment after handling a required action
+            # on the client.
             intent = stripe.PaymentIntent.confirm(data['paymentIntentId'])
+            # After confirm, if the PaymentIntent's status is succeeded, fulfill the order.
 
         return generate_response(intent)
     except Exception as e:
