@@ -174,7 +174,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                                 // and confirm it to finalize the payment. This step enables your integration to
                                 // synchronously fulfill the order on your backend and return the fulfillment result
                                 // to your client.
-                                if (paymentIntent != nil && paymentIntent.status == STPPaymentIntentStatusRequiresConfirmation) {
+                                if (paymentIntent.status == STPPaymentIntentStatusRequiresConfirmation) {
                                     NSLog(@"Re-confirming PaymentIntent after handling action");
                                     [self payWithPaymentMethod:nil orPaymentIntent:paymentIntent.stripeId];
                                 }
