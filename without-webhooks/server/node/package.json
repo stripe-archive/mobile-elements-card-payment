@@ -1,7 +1,7 @@
 {
-  "name": "stripe-sample-web-elements-card-payment",
+  "name": "stripe-sample-mobile-elements-card-payment",
   "version": "1.0.0",
-  "description": "How to take a card payment on the web",
+  "description": "How to take a card payment on mobile",
   "main": "index.js",
   "scripts": {
     "start": "node server.js",

@@ -38,24 +38,36 @@ const calculateOrderAmount = items => {
 };
 
 app.post("/pay", async (req, res) => {
-  const { paymentMethodId, paymentIntentId, items, currency } = req.body;
+  const {
+    paymentMethodId,
+    paymentIntentId,
+    items,
+    currency,
+    useStripeSdk
+  } = req.body;
 
   const orderAmount = calculateOrderAmount(items);
 
   try {
     let intent;
     if (!paymentIntentId) {
-      // Create new PaymentIntent
+      // Create new PaymentIntent with a PaymentMethod ID from the client.
+      // If the client passes `useStripeSdk`, set `use_stripe_sdk=true`
+      // to take advantage of new authentication features in mobile SDKs.
       intent = await stripe.paymentIntents.create({
         amount: orderAmount,
         currency: currency,
         payment_method: paymentMethodId,
         confirmation_method: "manual",
-        confirm: true
+        confirm: true,
+        use_stripe_sdk: useStripeSdk
       });
+      // After create, if the PaymentIntent's status is succeeded, fulfill the order.
     } else {
-      // Confirm the PaymentIntent to place a hold on the card
+      // Confirm the PaymentIntent to finalize payment after handling a required action
+      // on the client.
       intent = await stripe.paymentIntents.confirm(paymentIntentId);
+      // After confirm, if the PaymentIntent's status is succeeded, fulfill the order.
     }
 
     const response = generateResponse(intent);
