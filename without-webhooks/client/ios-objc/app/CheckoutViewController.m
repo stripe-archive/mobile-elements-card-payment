@@ -103,7 +103,6 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     [[STPAPIClient sharedClient] createPaymentMethodWithParams:paymentMethodParams completion:^(STPPaymentMethod *paymentMethod, NSError *createError) {
         // Create PaymentMethod failed
         if (createError != nil) {
-            NSString *message = createError.localizedDescription ?: @"";
             [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
         }
         else if (paymentMethod != nil) {
