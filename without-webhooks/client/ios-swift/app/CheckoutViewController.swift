@@ -50,10 +50,18 @@ class CheckoutViewController: UIViewController {
         loadPage()
     }
 
-    func displayAlert(title: String, message: String) {
+    func displayAlert(title: String, message: String, restartDemo: Bool = false) {
         DispatchQueue.main.async {
             let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+            if restartDemo {
+                alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
+                    self.cardTextField.clear()
+                    self.loadPage()
+                })
+            }
+            else {
+                alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+            }
             self.present(alert, animated: true, completion: nil)
         }
     }
@@ -136,63 +144,49 @@ class CheckoutViewController: UIViewController {
             if let payError = payError {
                 self?.displayAlert(title: "Payment failed", message: payError)
             }
-            // Payment succeeded
+            // Payment succeeded, no additional action required
             else if clientSecret != nil && (requiresAction == nil || requiresAction == false) {
                 STPAPIClient.shared().retrievePaymentIntent(withClientSecret: clientSecret!) { paymentIntent, retrieveError in
-                    DispatchQueue.main.async {
-                        if let paymentIntent = paymentIntent {
-                            let alert = UIAlertController(title: "Payment succeeded", message: paymentIntent.description, preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
-                                self?.cardTextField.clear()
-                                self?.loadPage()
-                            })
-                            self?.present(alert, animated: true, completion: nil)
-                        }
-                        else {
-                            let message = retrieveError?.localizedDescription ?? ""
-                            self?.displayAlert(title: "Payment failed", message: message)
-                        }
+                    if let paymentIntent = paymentIntent {
+                        self?.displayAlert(title: "Payment succeeded", message: paymentIntent.description, restartDemo: true)
+                    }
+                    else {
+                        let message = retrieveError?.localizedDescription ?? ""
+                        self?.displayAlert(title: "Payment failed", message: message)
                     }
                 }
             }
-            // Payment requires additional actions
+            // Payment requires additional action
             else if clientSecret != nil && requiresAction == true && self != nil {
                 let paymentHandler = STPPaymentHandler.shared()
                 paymentHandler.handleNextAction(forPayment: clientSecret!, authenticationContext: self!, returnURL: nil) { status, paymentIntent, handleActionError in
-                    DispatchQueue.main.async {
-                        switch (status) {
-                        case .failed:
-                            let message = handleActionError?.localizedDescription ?? ""
-                            self?.displayAlert(title: "Payment failed", message: message)
-                            break
-                        case .canceled:
-                            let message = handleActionError?.localizedDescription ?? ""
-                            self?.displayAlert(title: "Payment canceled", message: message)
-                            break
-                        case .succeeded:
-                            // After handling a required action on the client, the status of the PaymentIntent is
-                            // requires_confirmation. You must send the PaymentIntent ID to your backend
-                            // and confirm it to finalize the payment. This step enables your integration to
-                            // synchronously fulfill the order on your backend and return the fulfillment result
-                            // to your client.
-                            if let paymentIntent = paymentIntent, paymentIntent.status == STPPaymentIntentStatus.requiresConfirmation {
-                                print("Re-confirming PaymentIntent after handling action")
-                                self?.confirm(paymentIntentId: paymentIntent.stripeId)
-                            }
-                            else {
-                                let message = paymentIntent?.description ?? ""
-                                let alert = UIAlertController(title: "Payment succeeded", message: message, preferredStyle: .alert)
-                                alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
-                                    self?.cardTextField.clear()
-                                    self?.loadPage()
-                                })
-                                self?.present(alert, animated: true, completion: nil)
-                            }
-                            break
-                        @unknown default:
-                            fatalError()
-                            break
+                    switch (status) {
+                    case .failed:
+                        let message = handleActionError?.localizedDescription ?? ""
+                        self?.displayAlert(title: "Payment failed", message: message)
+                        break
+                    case .canceled:
+                        let message = handleActionError?.localizedDescription ?? ""
+                        self?.displayAlert(title: "Payment canceled", message: message)
+                        break
+                    case .succeeded:
+                        // After handling a required action on the client, the status of the PaymentIntent is
+                        // requires_confirmation. You must send the PaymentIntent ID to your backend
+                        // and confirm it to finalize the payment. This step enables your integration to
+                        // synchronously fulfill the order on your backend and return the fulfillment result
+                        // to your client.
+                        if let paymentIntent = paymentIntent, paymentIntent.status == STPPaymentIntentStatus.requiresConfirmation {
+                            print("Re-confirming PaymentIntent after handling action")
+                            self?.confirm(paymentIntentId: paymentIntent.stripeId)
                         }
+                        else {
+                            let message = paymentIntent?.description ?? ""
+                            self?.displayAlert(title: "Payment succeeded", message: message, restartDemo: true)
+                        }
+                        break
+                    @unknown default:
+                        fatalError()
+                        break
                     }
                 }
             }
