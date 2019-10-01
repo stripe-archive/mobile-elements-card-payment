@@ -160,7 +160,6 @@ class CheckoutViewController: UIViewController {
                 paymentHandler.handleNextAction(forPayment: clientSecret!, authenticationContext: self!, returnURL: nil) { status, paymentIntent, handleActionError in
                     switch (status) {
                     case .failed:
-                        let message = handleActionError?.localizedDescription ?? ""
                         self?.displayAlert(title: "Payment failed", message: handleActionError?.localizedDescription ?? "")
                         break
                     case .canceled:
