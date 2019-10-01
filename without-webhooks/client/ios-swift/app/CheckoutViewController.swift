@@ -176,7 +176,6 @@ class CheckoutViewController: UIViewController {
                             self?.confirm(paymentIntentId: paymentIntent.stripeId)
                         }
                         else {
-                            let message = paymentIntent?.description ?? ""
                             self?.displayAlert(title: "Payment succeeded", message: message, restartDemo: true)
                         }
                         break
