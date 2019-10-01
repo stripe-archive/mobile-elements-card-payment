@@ -158,7 +158,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                             [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description restartDemo:YES];
                         }
                         else {
-                            [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
+                            [self displayAlertWithTitle:@"Payment failed" message:retrieveError.localizedDescription ?: @"" restartDemo:NO];
                         }
                 }];
             }
