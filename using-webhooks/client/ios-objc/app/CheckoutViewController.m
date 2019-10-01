@@ -58,6 +58,22 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     [self loadPage];
 }
 
+- (void)displayAlertWithTitle:(NSString *)title message:(NSString *)message restartDemo:(BOOL)restartDemo {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+        if (restartDemo) {
+            [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+                [self.cardTextField clear];
+                [self loadPage];
+            }]];
+        }
+        else {
+            [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
+        }
+        [self presentViewController:alert animated:YES completion:nil];
+    });
+}
+
 - (void)loadPage {
     // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@create-payment-intent", BackendUrl]];
@@ -77,12 +93,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
         if (error != nil || httpResponse.statusCode != 200 || json[@"publicKey"] == nil) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSString *message = error.localizedDescription ?: @"";
-                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Error loading page" message:message preferredStyle:UIAlertControllerStyleAlert];
-                [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
-                [self presentViewController:alert animated:YES completion:nil];
-            });
+            [self displayAlertWithTitle:@"Error loading page" message:error.localizedDescription ?: @"" restartDemo:NO];
         }
         else {
             NSLog(@"Created PaymentIntent");
@@ -112,26 +123,15 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         dispatch_async(dispatch_get_main_queue(), ^{
             switch (status) {
                 case STPPaymentHandlerActionStatusFailed: {
-                    NSString *message = error.localizedDescription ?: @"";
-                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Payment failed" message:message preferredStyle:UIAlertControllerStyleAlert];
-                    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
-                    [self presentViewController:alert animated:YES completion:nil];
+                    [self displayAlertWithTitle:@"Payment failed" message:error.localizedDescription ?: @"" restartDemo:NO];
                     break;
                 }
                 case STPPaymentHandlerActionStatusCanceled: {
-                    NSString *message = error.localizedDescription ?: @"";
-                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Payment canceled" message:message preferredStyle:UIAlertControllerStyleAlert];
-                    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleCancel handler:nil]];
-                    [self presentViewController:alert animated:YES completion:nil];
+                    [self displayAlertWithTitle:@"Payment canceled" message:error.localizedDescription ?: @"" restartDemo:NO];
                     break;
                 }
                 case STPPaymentHandlerActionStatusSucceeded: {
-                    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Payment succeeded" message:paymentIntent.description preferredStyle:UIAlertControllerStyleAlert];
-                    [alert addAction:[UIAlertAction actionWithTitle:@"Restart demo" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                        [self.cardTextField clear];
-                        [self loadPage];
-                    }]];
-                    [self presentViewController:alert animated:YES completion:nil];
+                    [self displayAlertWithTitle:@"Payment succeeded" message:error.localizedDescription ?: @"" restartDemo:YES];
                     break;
                 }
                 default:
