@@ -168,7 +168,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
                 [paymentHandler handleNextActionForPayment:clientSecret withAuthenticationContext:self returnURL:nil completion:^(STPPaymentHandlerActionStatus status, STPPaymentIntent *paymentIntent, NSError *handleActionError) {
                         switch (status) {
                             case STPPaymentHandlerActionStatusFailed: {
-                                [self displayAlertWithTitle:@"Payment failed" message:message restartDemo:NO];
+                                [self displayAlertWithTitle:@"Payment failed" message:handleActionError.localizedDescription ?: @"" restartDemo:NO];
                                 break;
                             }
                             case STPPaymentHandlerActionStatusCanceled: {
