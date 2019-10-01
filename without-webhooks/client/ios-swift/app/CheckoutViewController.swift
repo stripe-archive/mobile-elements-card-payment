@@ -50,6 +50,14 @@ class CheckoutViewController: UIViewController {
         loadPage()
     }
 
+    func displayAlert(title: String, message: String) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+
     func loadPage() {
         // Load Stripe key from the server
         let url = URL(string: BackendUrl + "stripe-key")!
@@ -62,11 +70,8 @@ class CheckoutViewController: UIViewController {
                 let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
                 let stripePublicKey = json["publicKey"] as? String else {
-                    DispatchQueue.main.async {
-                        let alert = UIAlertController(title: "Error loading page", message: error?.localizedDescription ?? "Failed to decode response from server.", preferredStyle: .alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                        self?.present(alert, animated: true, completion: nil)
-                    }
+                    let message = error?.localizedDescription ?? "Failed to decode response from server."
+                    self?.displayAlert(title: "Error loading page", message: message)
                     return
             }
             print("Loaded Stripe key")
@@ -83,12 +88,7 @@ class CheckoutViewController: UIViewController {
         STPAPIClient.shared().createPaymentMethod(with: paymentMethodParams) { [weak self] paymentMethod, error in
             // Create PaymentMethod failed
             if let createError = error {
-                DispatchQueue.main.async {
-                    let message = createError.localizedDescription
-                    let alert = UIAlertController(title: "Payment failed", message: message, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                    self?.present(alert, animated: true, completion: nil)
-                }
+                self?.displayAlert(title: "Payment failed", message: createError.localizedDescription)
             }
             if let paymentMethodId = paymentMethod?.stripeId {
                 print("Created PaymentMethod")
@@ -125,12 +125,7 @@ class CheckoutViewController: UIViewController {
                 response.statusCode == 200,
                 let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any] else {
-                    // Request failed
-                    DispatchQueue.main.async {
-                        let alert = UIAlertController(title: "Payment failed", message: requestError?.localizedDescription ?? "", preferredStyle: .alert)
-                        alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                        self?.present(alert, animated: true, completion: nil)
-                    }
+                    self?.displayAlert(title: "Payment failed", message: requestError?.localizedDescription ?? "")
                     return
             }
             let payError = json["error"] as? String
@@ -138,12 +133,8 @@ class CheckoutViewController: UIViewController {
             let requiresAction = json["requiresAction"] as? Bool
 
             // Payment failed
-            if payError != nil {
-                DispatchQueue.main.async {
-                    let alert = UIAlertController(title: "Payment failed", message: payError, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                    self?.present(alert, animated: true, completion: nil)
-                }
+            if let payError = payError {
+                self?.displayAlert(title: "Payment failed", message: payError)
             }
             // Payment succeeded
             else if clientSecret != nil && (requiresAction == nil || requiresAction == false) {
@@ -159,9 +150,7 @@ class CheckoutViewController: UIViewController {
                         }
                         else {
                             let message = retrieveError?.localizedDescription ?? ""
-                            let alert = UIAlertController(title: "Payment failed", message: message, preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                            self?.present(alert, animated: true, completion: nil)
+                            self?.displayAlert(title: "Payment failed", message: message)
                         }
                     }
                 }
@@ -174,17 +163,18 @@ class CheckoutViewController: UIViewController {
                         switch (status) {
                         case .failed:
                             let message = handleActionError?.localizedDescription ?? ""
-                            let alert = UIAlertController(title: "Payment failed", message: message, preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                            self?.present(alert, animated: true, completion: nil)
+                            self?.displayAlert(title: "Payment failed", message: message)
                             break
                         case .canceled:
                             let message = handleActionError?.localizedDescription ?? ""
-                            let alert = UIAlertController(title: "Payment canceled", message: message, preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
-                            self?.present(alert, animated: true, completion: nil)
+                            self?.displayAlert(title: "Payment canceled", message: message)
                             break
                         case .succeeded:
+                            // After handling a required action on the client, the status of the PaymentIntent is
+                            // requires_confirmation. You must send the PaymentIntent ID to your backend
+                            // and confirm it to finalize the payment. This step enables your integration to
+                            // synchronously fulfill the order on your backend and return the fulfillment result
+                            // to your client.
                             if let paymentIntent = paymentIntent, paymentIntent.status == STPPaymentIntentStatus.requiresConfirmation {
                                 print("Re-confirming PaymentIntent after handling action")
                                 self?.confirm(paymentIntentId: paymentIntent.stripeId)
