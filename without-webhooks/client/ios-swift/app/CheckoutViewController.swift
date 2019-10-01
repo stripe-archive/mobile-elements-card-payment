@@ -40,7 +40,7 @@ class CheckoutViewController: UIViewController {
             if restartDemo {
                 alert.addAction(UIAlertAction(title: "Restart demo", style: .cancel) { _ in
                     self.cardTextField.clear()
-                    self.loadPage()
+                    self.startCheckout()
                 })
             }
             else {
@@ -63,10 +63,10 @@ class CheckoutViewController: UIViewController {
             view.rightAnchor.constraint(equalToSystemSpacingAfter: stackView.rightAnchor, multiplier: 2),
             stackView.topAnchor.constraint(equalToSystemSpacingBelow: view.topAnchor, multiplier: 2),
         ])
-        loadPage()
+        startCheckout()
     }
 
-    func loadPage() {
+    func startCheckout() {
         // Load Stripe key from the server
         let url = URL(string: BackendUrl + "stripe-key")!
         var request = URLRequest(url: url)
@@ -77,12 +77,12 @@ class CheckoutViewController: UIViewController {
                 response.statusCode == 200,
                 let data = data,
                 let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
-                let stripePublicKey = json["publicKey"] as? String else {
+                let publishableKey = json["publishableKey"] as? String else {
                     self?.displayAlert(title: "Error loading page", message: error?.localizedDescription ?? "Failed to decode response from server.")
                     return
             }
             print("Loaded Stripe key")
-            Stripe.setDefaultPublishableKey(stripePublicKey)
+            Stripe.setDefaultPublishableKey(publishableKey)
         })
         task.resume()
     }
