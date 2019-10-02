@@ -20,10 +20,10 @@ public class Server {
     private static Gson gson = new Gson();
 
     static class StripeKeyResponse {
-        private String publicKey;
+        private String publishableKey;
 
-        public StripeKeyResponse(String publicKey) {
-            this.publicKey = publicKey;
+        public StripeKeyResponse(String publishableKey) {
+            this.publishableKey = publishableKey;
         }
     }
 
@@ -129,7 +129,7 @@ public class Server {
         get("/stripe-key", (request, response) -> {
             response.type("application/json");
             // Send public key to client
-            return gson.toJson(new StripeKeyResponse(dotenv.get("STRIPE_PUBLIC_KEY")));
+            return gson.toJson(new StripeKeyResponse(dotenv.get("STRIPE_PUBLISHABLE_KEY")));
         });
 
         post("/pay", (request, response) -> {
@@ -140,18 +140,20 @@ public class Server {
             try {
                 if (postBody.getPaymentIntentId() == null) {
                     int orderAmount = calculateOrderAmount(postBody.getItems());
-                    // Create new PaymentIntent for the order
+                    // Create new PaymentIntent with a PaymentMethod ID from the client.
                     PaymentIntentCreateParams createParams = new PaymentIntentCreateParams.Builder()
                             .setCurrency(postBody.getCurrency()).setAmount(new Long(orderAmount))
                             .setPaymentMethod(postBody.getPaymentMethodId())
-                            .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL)
-                            .setConfirm(true).build();
-                    // Create a PaymentIntent with the order amount and currency
+                            .setConfirmationMethod(PaymentIntentCreateParams.ConfirmationMethod.MANUAL).setConfirm(true)
+                            .build();
                     intent = PaymentIntent.create(createParams);
+                    // After create, if the PaymentIntent's status is succeeded, fulfill the order.
                 } else {
-                    // Confirm the PaymentIntent to collect the money
+                    // Confirm the PaymentIntent to finalize payment after handling a required
+                    // action on the client.
                     intent = PaymentIntent.retrieve(postBody.getPaymentIntentId());
                     intent = intent.confirm();
+                    // After confirm, if the PaymentIntent's status is succeeded, fulfill the order.
                 }
 
                 responseBody = generateResponse(intent, responseBody);

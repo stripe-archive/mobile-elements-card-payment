@@ -1,4 +1,4 @@
-# Taking a card payment on the web
+# Taking a card payment on mobile
 
 A [Sinatra](http://sinatrarb.com/) implementation.
 

@@ -1,4 +1,4 @@
-# Taking a card payment on the web
+# Taking a card payment on mobile
 An [Express server](http://expressjs.com) implementation
 
 ## Requirements
