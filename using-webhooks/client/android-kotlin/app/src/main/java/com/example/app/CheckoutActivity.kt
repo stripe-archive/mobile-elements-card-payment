@@ -39,17 +39,42 @@ class CheckoutActivity : AppCompatActivity() {
     // 10.0.2.2 is the Android emulator's alias to localhost
     private val backendUrl = "http://10.0.2.2:4242/"
     private val httpClient = OkHttpClient()
-    private lateinit var stripePublicKey: String
+    private lateinit var publishableKey: String
     private lateinit var paymentIntentClientSecret: String
     private lateinit var stripe: Stripe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_checkout)
-        loadPage()
+        startCheckout()
     }
 
-    private fun loadPage() {
+    private fun displayAlert(activity: Activity?, title: String, message: String, restartDemo: Boolean = false) {
+        if (activity == null) {
+            return
+        }
+        runOnUiThread {
+            val builder = AlertDialog.Builder(activity!!)
+            builder.setTitle(title)
+            builder.setMessage(message)
+            if (restartDemo) {
+                builder.setPositiveButton("Restart demo") { _, _ ->
+                    val cardInputWidget =
+                        findViewById<CardInputWidget>(R.id.cardInputWidget)
+                    cardInputWidget.clear()
+                    startCheckout()
+                }
+            }
+            else {
+                builder.setPositiveButton("Ok", null)
+            }
+            val dialog = builder.create()
+            dialog.show()
+        }
+    }
+
+    private fun startCheckout() {
+        val weakActivity = WeakReference<Activity>(this)
         // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
         val mediaType = "application/json; charset=utf-8".toMediaType()
         val json = """
@@ -68,27 +93,23 @@ class CheckoutActivity : AppCompatActivity() {
         httpClient.newCall(request)
             .enqueue(object: Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    runOnUiThread {
-                        Toast.makeText(applicationContext, "Error: $e", Toast.LENGTH_LONG).show()
-                    }
+                    displayAlert(weakActivity.get(), "Failed to load page", "Error: $e")
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     if (!response.isSuccessful) {
-                        runOnUiThread {
-                            Toast.makeText(applicationContext, "Error: $response", Toast.LENGTH_LONG).show()
-                        }
+                        displayAlert(weakActivity.get(), "Failed to load page", "Error: $response")
                     } else {
                         val responseData = response.body?.string()
                         var json = JSONObject(responseData)
 
-                        // The response from the server includes the Stripe public key and
+                        // The response from the server includes the Stripe publishable key and
                         // PaymentIntent details.
-                        stripePublicKey = json.getString("publicKey")
+                        publishableKey = json.getString("publishableKey")
                         paymentIntentClientSecret = json.getString("clientSecret")
 
                         // Use the public key from the server to initialize the Stripe instance.
-                        stripe = Stripe(applicationContext, stripePublicKey)
+                        stripe = Stripe(applicationContext, publishableKey)
                     }
                 }
             })
@@ -118,56 +139,15 @@ class CheckoutActivity : AppCompatActivity() {
                 val paymentIntent = result.intent
                 val status = paymentIntent.status
                 if (status == StripeIntent.Status.Succeeded) {
-                    // Payment completed successfully
-                    runOnUiThread {
-                        if (weakActivity.get() != null) {
-                            val activity = weakActivity.get()!!
-                            val builder = AlertDialog.Builder(activity)
-                            builder.setTitle("Payment completed")
-                            val gson = GsonBuilder().setPrettyPrinting().create()
-                            builder.setMessage(gson.toJson(paymentIntent))
-                            builder.setPositiveButton("Restart demo") { _, _ ->
-                                val cardInputWidget =
-                                    findViewById<CardInputWidget>(R.id.cardInputWidget)
-                                cardInputWidget.clear()
-                                loadPage()
-                            }
-                            val dialog = builder.create()
-                            dialog.show()
-                        }
-                    }
+                    val gson = GsonBuilder().setPrettyPrinting().create()
+                    displayAlert(weakActivity.get(), "Payment succeeded", gson.toJson(paymentIntent), restartDemo = true)
                 } else if (status == StripeIntent.Status.RequiresPaymentMethod) {
-                    // Payment failed – allow retrying using a different payment method
-                    runOnUiThread {
-                        if (weakActivity.get() != null) {
-                            val activity = weakActivity.get()!!
-                            val builder = AlertDialog.Builder(activity)
-                            builder.setTitle("Payment failed")
-                            builder.setMessage(paymentIntent.lastPaymentError!!.message)
-                            builder.setPositiveButton("Ok") { _, _ ->
-                                val cardInputWidget =
-                                    findViewById<CardInputWidget>(R.id.cardInputWidget)
-                                cardInputWidget.clear()
-                            }
-                            val dialog = builder.create()
-                            dialog.show()
-                        }
-                    }
+                    displayAlert(weakActivity.get(), "Payment failed", paymentIntent.lastPaymentError?.message ?: "")
                 }
             }
 
             override fun onError(e: Exception) {
-                // Payment request failed – allow retrying using the same payment method
-                runOnUiThread {
-                    if (weakActivity.get() != null) {
-                        val activity = weakActivity.get()!!
-                        val builder = AlertDialog.Builder(activity)
-                        builder.setMessage(e.toString())
-                        builder.setPositiveButton("Ok", null)
-                        val dialog = builder.create()
-                        dialog.show()
-                    }
-                }
+                displayAlert(weakActivity.get(), "Payment failed", e.toString())
             }
         })
     }
