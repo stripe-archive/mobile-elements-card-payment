@@ -136,4 +136,4 @@ extension CheckoutViewController: STPAuthenticationContext {
     }
 }
 
-// docs_window_spec {"setup_ui": [[21, 52], [99, 100], [130, 132]]}
+// docs_window_spec {"setup-ui-swift": [[21, 52], [99, 100], [130, 132]]}

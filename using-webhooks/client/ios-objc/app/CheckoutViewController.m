@@ -148,4 +148,4 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 
 @end
 
-// docs_window_spec {"setup_ui": [[21, 52], [99, 100], [130, 132]]}
+// docs_window_spec {"setup-ui-objc": [[21, 52], [99, 100], [130, 132]]}
