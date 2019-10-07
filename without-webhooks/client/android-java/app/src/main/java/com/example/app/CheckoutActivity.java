@@ -34,10 +34,18 @@ import com.stripe.android.ApiResultCallback;
 import com.stripe.android.PaymentConfiguration;
 import com.stripe.android.PaymentIntentResult;
 import com.stripe.android.Stripe;
+import com.stripe.android.exception.APIConnectionException;
+import com.stripe.android.exception.APIException;
+import com.stripe.android.exception.AuthenticationException;
+import com.stripe.android.exception.InvalidRequestException;
 import com.stripe.android.model.ConfirmPaymentIntentParams;
 import com.stripe.android.model.PaymentIntent;
+import com.stripe.android.model.PaymentMethod;
 import com.stripe.android.model.PaymentMethodCreateParams;
+import com.stripe.android.model.StripeIntent;
 import com.stripe.android.view.CardInputWidget;
+
+import org.jetbrains.annotations.NotNull;
 
 
 public class CheckoutActivity extends AppCompatActivity {
@@ -52,8 +60,6 @@ public class CheckoutActivity extends AppCompatActivity {
     // 10.0.2.2 is the Android emulator's alias to localhost
     private String backendUrl = "http://10.0.2.2:4242/";
     private OkHttpClient httpClient = new OkHttpClient();
-    private String stripePublicKey;
-    private String paymentIntentClientSecret;
     private Stripe stripe;
 
     @Override
@@ -68,17 +74,92 @@ public class CheckoutActivity extends AppCompatActivity {
         CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
         cardInputWidget.clear();
 
-        // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
+        // Load Stripe publishable key from the server
+        Request request = new Request.Builder()
+                .url(backendUrl + "stripe-key")
+                .get()
+                .build();
+        httpClient.newCall(request)
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        runOnUiThread(() -> {
+                            Context applicationContext = getApplicationContext();
+                            Toast.makeText(applicationContext, "Error: " + e.toString(), Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onResponse(Call call, final Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            runOnUiThread(() -> {
+                                Context applicationContext = getApplicationContext();
+                                Toast.makeText(applicationContext, "Error: " + response.toString(), Toast.LENGTH_LONG).show();
+                            });
+                        } else {
+                            Gson gson = new Gson();
+                            Type type = new TypeToken<Map<String, String>>(){}.getType();
+                            Map<String, String> map = gson.fromJson(response.body().string(), type);
+                            String stripePublishableKey = map.get("publishableKey");
+
+                            runOnUiThread(() -> {
+                                // Use the publishable key from the server to initialize the Stripe instance.
+                                Context applicationContext = getApplicationContext();
+                                PaymentConfiguration.init(applicationContext, stripePublishableKey);
+                                stripe = new Stripe(applicationContext, stripePublishableKey);
+
+                                // Hook up the pay button to the card widget and stripe instance
+                                Button payButton = findViewById(R.id.payButton);
+                                payButton.setOnClickListener((View view) -> {
+                                    pay();
+                                });
+                            });
+                        }
+                    }
+                });
+    }
+
+    private void pay() {
+        CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
+        PaymentMethodCreateParams params = cardInputWidget.getPaymentMethodCreateParams();
+
+        if (params == null) {
+            return;
+        }
+        stripe.createPaymentMethod(params, new ApiResultCallback<PaymentMethod>() {
+            @Override
+            public void onSuccess(@NonNull PaymentMethod result) {
+                // Create and confirm the PaymentIntent by calling the sample server's /pay endpoint.
+                pay(result.id, null);
+            }
+
+            @Override
+            public void onError(@NonNull Exception e) {
+
+            }
+        });
+    }
+
+    private void pay(String paymentMethod, String paymentIntent) {
+        WeakReference<Activity> weakActivity = new WeakReference<>(this);
         MediaType mediaType = MediaType.get("application/json; charset=utf-8");
-        String json = "{"
-                + "\"currency\":\"usd\","
-                + "\"items\":["
-                + "{\"id\":\"photo_subscription\"}"
-                + "]"
-                + "}";
+        String json;
+        if (paymentMethod != null) {
+            json = "{"
+                    + "\"paymentMethodId\":" + "\"" + paymentMethod + "\","
+                    + "\"currency\":\"usd\","
+                    + "\"items\":["
+                    + "{\"id\":\"photo_subscription\"}"
+                    + "]"
+                    + "}";
+        } else {
+            json = "{"
+                    + "\"paymentIntentId\":" +  "\"" + paymentIntent + "\""
+                    + "}";
+        }
         RequestBody body = RequestBody.create(json, mediaType);
         Request request = new Request.Builder()
-                .url(backendUrl + "create-payment-intent")
+                .url(backendUrl + "pay")
                 .post(body)
                 .build();
         httpClient.newCall(request)
@@ -103,30 +184,39 @@ public class CheckoutActivity extends AppCompatActivity {
                             Type type = new TypeToken<Map<String, String>>(){}.getType();
                             Map<String, String> responseMap = gson.fromJson(response.body().string(), type);
 
-                            // The response from the server includes the Stripe public key and
-                            // PaymentIntent details.
-                            stripePublicKey = responseMap.get("publicKey");
-                            paymentIntentClientSecret = responseMap.get("clientSecret");
+                            String error = responseMap.get("error");
+                            String paymentIntentClientSecret = responseMap.get("clientSecret");
+                            String requiresAction = responseMap.get("requiresAction");
 
-                            runOnUiThread(() -> {
-                                // Use the public key from the server to initialize the Stripe instance.
-                                Context applicationContext = getApplicationContext();
-                                PaymentConfiguration.init(applicationContext, stripePublicKey);
-                                stripe = new Stripe(applicationContext, stripePublicKey);
-                            });
+                            if (error != null) {
+                                displayAlert(weakActivity.get(), "Error", error.toString(), false);
+                            } else if (paymentIntentClientSecret != null && requiresAction != "true") {
+                                displayAlert(weakActivity.get(), "Payment succeeded", paymentIntentClientSecret, true);
+                            } else if (paymentIntentClientSecret != null && requiresAction == "true") {
+                                runOnUiThread(() -> {
+                                    stripe.authenticatePayment(weakActivity.get(), paymentIntentClientSecret);
+                                });
+                            }
                         }
                     }
                 });
+    }
 
-        // Hook up the pay button to the card widget and stripe instance
-        Button payButton = findViewById(R.id.payButton);
-        payButton.setOnClickListener((View view) -> {
-            PaymentMethodCreateParams params = cardInputWidget.getPaymentMethodCreateParams();
-            if (params != null) {
-                ConfirmPaymentIntentParams confirmParams = ConfirmPaymentIntentParams
-                        .createWithPaymentMethodCreateParams(params, paymentIntentClientSecret);
-                stripe.confirmPayment(this, confirmParams);
+    private void displayAlert(Activity activity, String title, String message, boolean restartDemo) {
+        runOnUiThread(() -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setTitle(title);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            builder.setMessage(message);
+            if (restartDemo) {
+                builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
+                    loadPage();
+                });
+            } else {
+                builder.setPositiveButton("Ok", null);
             }
+            AlertDialog dialog = builder.create();
+            dialog.show();
         });
     }
 
@@ -146,15 +236,8 @@ public class CheckoutActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         if (weakActivity.get() != null) {
                             Activity activity = weakActivity.get();
-                            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                            builder.setTitle("Payment completed");
                             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                            builder.setMessage(gson.toJson(paymentIntent));
-                            builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
-                                loadPage();
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+                            displayAlert(activity, "Payment completed", gson.toJson(paymentIntent), true);
                         }
                     });
                 } else if (status == PaymentIntent.Status.RequiresPaymentMethod) {
@@ -162,17 +245,16 @@ public class CheckoutActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         if (weakActivity.get() != null) {
                             Activity activity = weakActivity.get();
-                            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                            builder.setTitle("Payment failed");
-                            builder.setMessage(paymentIntent.getLastPaymentError().message);
-                            builder.setPositiveButton("Ok", (DialogInterface dialog, int index) -> {
-                                CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
-                                cardInputWidget.clear();
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+                            displayAlert(activity, "Payment failed", paymentIntent.getLastPaymentError().message, false);
                         }
                     });
+                } else if (status == PaymentIntent.Status.RequiresConfirmation) {
+                    // After handling a required action on the client, the status of the PaymentIntent is
+                    // requires_confirmation. You must send the PaymentIntent ID to your backend
+                    // and confirm it to finalize the payment. This step enables your integration to
+                    // synchronously fulfill the order on your backend and return the fulfillment result
+                    // to your client.
+                    pay(null, paymentIntent.getId());
                 }
             }
 
@@ -182,11 +264,7 @@ public class CheckoutActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (weakActivity.get() != null) {
                         Activity activity = weakActivity.get();
-                        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                        builder.setMessage(e.toString());
-                        builder.setPositiveButton("Ok", null);
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                        displayAlert(activity, "Error", e.toString(), false);
                     }
                 });
             }
