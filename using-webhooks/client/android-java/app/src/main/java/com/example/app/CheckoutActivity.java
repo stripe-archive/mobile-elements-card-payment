@@ -58,10 +58,10 @@ public class CheckoutActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_checkout);
-        loadPage();
+        startCheckout();
     }
 
-    private void loadPage() {
+    private void startCheckout() {
         // Create a PaymentIntent by calling the sample server's /create-payment-intent endpoint.
         MediaType mediaType = MediaType.get("application/json; charset=utf-8");
         String json = "{"
@@ -130,7 +130,7 @@ public class CheckoutActivity extends AppCompatActivity {
             builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
                 CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
                 cardInputWidget.clear();
-                loadPage();
+                startCheckout();
             });
         } else {
             builder.setPositiveButton("Ok", null);
