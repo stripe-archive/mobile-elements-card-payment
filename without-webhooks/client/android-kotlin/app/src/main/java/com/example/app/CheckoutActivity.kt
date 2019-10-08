@@ -136,6 +136,7 @@ class CheckoutActivity : AppCompatActivity() {
         if (!paymentMethod.isNullOrEmpty()) {
             json = """
                 {
+                    "useStripeSdk":true,
                     "paymentMethodId":"$paymentMethod",
                     "currency":"usd",
                     "items": [

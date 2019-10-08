@@ -1,5 +1,5 @@
 PODS:
-  - Stripe (17.0.2)
+  - Stripe (18.0.0)
 
 DEPENDENCIES:
   - Stripe
@@ -9,7 +9,7 @@ SPEC REPOS:
     - Stripe
 
 SPEC CHECKSUMS:
-  Stripe: 6c9ab10f087ca76c3cd7311462e383434921bdf8
+  Stripe: 8c9ac6b717a38ed4f373d4db9204cfe8c4120d65
 
 PODFILE CHECKSUM: 2c7bdf831495598c950f9cb33744e89508da0ea8
 

@@ -111,6 +111,7 @@ class CheckoutViewController: UIViewController {
         var json: [String: Any] = [:]
         if let paymentMethodId = paymentMethodId {
             json = [
+                "useStripeSdk": true,
                 "paymentMethodId": paymentMethodId,
                 "currency": "usd",
                 "items": [
