@@ -51,7 +51,6 @@ public class CheckoutActivity extends AppCompatActivity {
     // 10.0.2.2 is the Android emulator's alias to localhost
     private String backendUrl = "http://10.0.2.2:4242/";
     private OkHttpClient httpClient = new OkHttpClient();
-    private String stripePublicKey;
     private String paymentIntentClientSecret;
     private Stripe stripe;
 
@@ -100,11 +99,11 @@ public class CheckoutActivity extends AppCompatActivity {
 
                             // The response from the server includes the Stripe public key and
                             // PaymentIntent details.
-                            stripePublicKey = responseMap.get("publicKey");
+                            String stripePublishableKey = responseMap.get("publishableKey");
                             paymentIntentClientSecret = responseMap.get("clientSecret");
 
                             // Use the key from the server to initialize the Stripe instance.
-                            stripe = new Stripe(getApplicationContext(), stripePublicKey);
+                            stripe = new Stripe(getApplicationContext(), stripePublishableKey);
                         }
                     }
                 });
