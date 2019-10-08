@@ -121,22 +121,22 @@ public class CheckoutActivity extends AppCompatActivity {
         });
     }
 
-    private void displayAlert(Activity activity, String title, String message, boolean restartDemo) {
-        runOnUiThread(() -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-            builder.setTitle(title);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            builder.setMessage(message);
-            if (restartDemo) {
-                builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
-                    loadPage();
-                });
-            } else {
-                builder.setPositiveButton("Ok", null);
-            }
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        });
+    private void displayAlert(@NonNull Activity activity, @NonNull String title, @NonNull String message, boolean restartDemo) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(title);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        builder.setMessage(message);
+        if (restartDemo) {
+            builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
+                CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
+                cardInputWidget.clear();
+                loadPage();
+            });
+        } else {
+            builder.setPositiveButton("Ok", null);
+        }
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override
@@ -163,7 +163,9 @@ public class CheckoutActivity extends AppCompatActivity {
             @Override
             public void onError(@NonNull Exception e) {
                 // Payment request failed – allow retrying using the same payment method
-                displayAlert(weakActivity.get(), "Error", e.toString(), false);
+                if (weakActivity.get() != null) {
+                    displayAlert(weakActivity.get(), "Error", e.toString(), false);
+                }
             }
         });
     }
