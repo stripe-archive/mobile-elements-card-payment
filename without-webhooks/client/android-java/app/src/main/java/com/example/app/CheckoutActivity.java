@@ -100,6 +100,7 @@ public class CheckoutActivity extends AppCompatActivity {
         final String json;
         if (paymentMethodId != null) {
             json = "{"
+                    + "\"useStripeSdk\":true,"
                     + "\"paymentMethodId\":" + "\"" + paymentMethodId + "\","
                     + "\"currency\":\"usd\","
                     + "\"items\":["

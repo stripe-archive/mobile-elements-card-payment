@@ -117,6 +117,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
     NSDictionary *json = @{};
     if (paymentMethodId != nil) {
         json = @{
+            @"useStripeSdk": @YES,
             @"paymentMethodId": paymentMethodId,
             @"currency": @"usd",
             @"items": @[
