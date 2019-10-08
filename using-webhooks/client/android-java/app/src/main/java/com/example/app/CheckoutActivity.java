@@ -121,6 +121,24 @@ public class CheckoutActivity extends AppCompatActivity {
         });
     }
 
+    private void displayAlert(Activity activity, String title, String message, boolean restartDemo) {
+        runOnUiThread(() -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setTitle(title);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            builder.setMessage(message);
+            if (restartDemo) {
+                builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
+                    loadPage();
+                });
+            } else {
+                builder.setPositiveButton("Ok", null);
+            }
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        });
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -134,54 +152,18 @@ public class CheckoutActivity extends AppCompatActivity {
                 PaymentIntent.Status status = paymentIntent.getStatus();
                 if (status == PaymentIntent.Status.Succeeded) {
                     // Payment completed successfully
-                    runOnUiThread(() -> {
-                        if (weakActivity.get() != null) {
-                            Activity activity = weakActivity.get();
-                            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                            builder.setTitle("Payment completed");
-                            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                            builder.setMessage(gson.toJson(paymentIntent));
-                            builder.setPositiveButton("Restart demo", (DialogInterface dialog, int index) -> {
-                                CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
-                                cardInputWidget.clear();
-                                loadPage();
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-                    });
+                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                    displayAlert(weakActivity.get(), "Payment completed", gson.toJson(paymentIntent), true);
                 } else if (status == PaymentIntent.Status.RequiresPaymentMethod) {
                     // Payment failed – allow retrying using a different payment method
-                    runOnUiThread(() -> {
-                        if (weakActivity.get() != null) {
-                            Activity activity = weakActivity.get();
-                            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                            builder.setTitle("Payment failed");
-                            builder.setMessage(paymentIntent.getLastPaymentError().message);
-                            builder.setPositiveButton("Ok", (DialogInterface dialog, int index) -> {
-                                CardInputWidget cardInputWidget = findViewById(R.id.cardInputWidget);
-                                cardInputWidget.clear();
-                            });
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-                    });
+                    displayAlert(weakActivity.get(), "Payment failed", paymentIntent.getLastPaymentError().message, false);
                 }
             }
 
             @Override
             public void onError(@NonNull Exception e) {
                 // Payment request failed – allow retrying using the same payment method
-                runOnUiThread(() -> {
-                    if (weakActivity.get() != null) {
-                        Activity activity = weakActivity.get();
-                        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                        builder.setMessage(e.toString());
-                        builder.setPositiveButton("Ok", null);
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    }
-                });
+                displayAlert(weakActivity.get(), "Error", e.toString(), false);
             }
         });
     }
