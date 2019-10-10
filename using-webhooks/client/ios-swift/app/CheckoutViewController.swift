@@ -93,6 +93,7 @@ class CheckoutViewController: UIViewController {
             }
             print("Created PaymentIntent")
             self?.paymentIntentClientSecret = clientSecret
+            // Configure the SDK with your Stripe publishable key so that it can make requests to the Stripe API
             Stripe.setDefaultPublishableKey(publishableKey)
         })
         task.resume()
