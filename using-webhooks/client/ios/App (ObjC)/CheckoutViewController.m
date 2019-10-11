@@ -18,7 +18,7 @@
 */
 NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 
-@interface CheckoutViewController ()
+@interface CheckoutViewController ()  <STPAuthenticationContext>
 
 @property (weak) STPPaymentCardTextField *cardTextField;
 @property (weak) UIButton *payButton;
@@ -107,6 +107,44 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 }
 
 - (void)pay {
+    if (!self.paymentIntentClientSecret) {
+        NSLog(@"PaymentIntent hasn't been created");
+        return;
+    }
+
+    // Collect card details
+    STPPaymentMethodCardParams *cardParams = self.cardTextField.cardParams;
+    STPPaymentMethodParams *paymentMethodParams = [STPPaymentMethodParams paramsWithCard:cardParams billingDetails:nil metadata:nil];
+    STPPaymentIntentParams *paymentIntentParams = [[STPPaymentIntentParams alloc] initWithClientSecret:self.paymentIntentClientSecret];
+    paymentIntentParams.paymentMethodParams = paymentMethodParams;
+
+    // Submit the payment
+    STPPaymentHandler *paymentHandler = [STPPaymentHandler sharedHandler];
+    [paymentHandler confirmPayment:paymentIntentParams withAuthenticationContext:self completion:^(STPPaymentHandlerActionStatus status, STPPaymentIntent *paymentIntent, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            switch (status) {
+                case STPPaymentHandlerActionStatusFailed: {
+                    [self displayAlertWithTitle:@"Payment failed" message:error.localizedDescription ?: @"" restartDemo:NO];
+                    break;
+                }
+                case STPPaymentHandlerActionStatusCanceled: {
+                    [self displayAlertWithTitle:@"Payment canceled" message:error.localizedDescription ?: @"" restartDemo:NO];
+                    break;
+                }
+                case STPPaymentHandlerActionStatusSucceeded: {
+                    [self displayAlertWithTitle:@"Payment succeeded" message:paymentIntent.description ?: @"" restartDemo:YES];
+                    break;
+                }
+                default:
+                    break;
+            }
+        });
+    }];
+}
+
+# pragma mark STPAuthenticationContext
+- (UIViewController *)authenticationPresentingViewController {
+    return self;
 }
 
 @end

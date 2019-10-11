@@ -101,6 +101,39 @@ class CheckoutViewController: UIViewController {
 
     @objc
     func pay() {
+        guard let paymentIntentClientSecret = paymentIntentClientSecret else {
+            return;
+        }
+        // Collect card details
+        let cardParams = cardTextField.cardParams
+        let paymentMethodParams = STPPaymentMethodParams(card: cardParams, billingDetails: nil, metadata: nil)
+        let paymentIntentParams = STPPaymentIntentParams(clientSecret: paymentIntentClientSecret)
+        paymentIntentParams.paymentMethodParams = paymentMethodParams
+
+        // Submit the payment
+        let paymentHandler = STPPaymentHandler.shared()
+        paymentHandler.confirmPayment(withParams: paymentIntentParams, authenticationContext: self) { (status, paymentIntent, error) in
+            switch (status) {
+            case .failed:
+                self.displayAlert(title: "Payment failed", message: error?.localizedDescription ?? "")
+                break
+            case .canceled:
+                self.displayAlert(title: "Payment canceled", message: error?.localizedDescription ?? "")
+                break
+            case .succeeded:
+                self.displayAlert(title: "Payment succeeded", message: paymentIntent?.description ?? "", restartDemo: true)
+                break
+            @unknown default:
+                fatalError()
+                break
+            }
+        }
+    }
+}
+
+extension CheckoutViewController: STPAuthenticationContext {
+    func authenticationPresentingViewController() -> UIViewController {
+        return self
     }
 }
 
