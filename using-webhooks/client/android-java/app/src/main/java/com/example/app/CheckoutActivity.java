@@ -125,7 +125,7 @@ public class CheckoutActivity extends AppCompatActivity {
                 type
         );
 
-        // The response from the server includes the Stripe public key and
+        // The response from the server includes the Stripe publishable key and
         // PaymentIntent details.
         String stripePublishableKey = responseMap.get("publishableKey");
         paymentIntentClientSecret = responseMap.get("clientSecret");
