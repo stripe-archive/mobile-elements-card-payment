@@ -60,4 +60,36 @@ $app->post('/create-payment-intent', function (Request $request, Response $respo
     return $response->withJson(array('publishableKey' => $pub_key, 'clientSecret' => $payment_intent->client_secret));
 });
 
+$app->post('/webhook', function(Request $request, Response $response) {
+    $logger = $this->get('logger');
+    $event = $request->getParsedBody();
+    // Parse the message body (and check the signature if possible)
+    $webhookSecret = getenv('STRIPE_WEBHOOK_SECRET');
+    if ($webhookSecret) {
+      try {
+        $event = \Stripe\Webhook::constructEvent(
+          $request->getBody(),
+          $request->getHeaderLine('stripe-signature'),
+          $webhookSecret
+        );
+      } catch (\Exception $e) {
+        return $response->withJson([ 'error' => $e->getMessage() ])->withStatus(403);
+      }
+    } else {
+      $event = $request->getParsedBody();
+    }
+    $type = $event['type'];
+    $object = $event['data']['object'];
+    
+    if ($type == 'payment_intent.succeeded') {
+      // Fulfill any orders, e-mail receipts, etc
+      // To cancel the payment you will need to issue a Refund (https://stripe.com/docs/api/refunds)
+      $logger->info('💰 Payment received! ');
+    } else if ($type == 'payment_intent.payment_failed') {
+      $logger->info('❌ Payment failed.');
+    }
+
+    return $response->withJson([ 'status' => 'success' ])->withStatus(200);
+});
+
 $app->run();

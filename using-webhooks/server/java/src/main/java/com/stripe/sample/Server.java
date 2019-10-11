@@ -16,6 +16,7 @@ import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.exception.*;
+import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -77,6 +78,41 @@ public class Server {
             PaymentIntent intent = PaymentIntent.create(createParams);
             // Send public key and PaymentIntent details to client
             return gson.toJson(new CreatePaymentResponse(dotenv.get("STRIPE_PUBLISHABLE_KEY"), intent.getClientSecret()));
+        });
+
+        post("/webhook", (request, response) -> {
+            String payload = request.body();
+            String sigHeader = request.headers("Stripe-Signature");
+            String endpointSecret = dotenv.get("STRIPE_WEBHOOK_SECRET");
+
+            Event event = null;
+
+            try {
+                event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+            } catch (SignatureVerificationException e) {
+                // Invalid signature
+                response.status(400);
+                return "";
+            }
+
+            switch (event.getType()) {
+            case "payment_intent.succeeded":
+                // Fulfill any orders, e-mail receipts, etc
+                // To cancel the payment you will need to issue a Refund
+                // (https://stripe.com/docs/api/refunds)
+                System.out.println("💰Payment received!");
+                break;
+            case "payment_intent.payment_failed":
+                System.out.println("❌ Payment failed.");
+                break;
+            default:
+                // Unexpected event type
+                response.status(400);
+                return "";
+            }
+
+            response.status(200);
+            return "";
         });
     }
 }
