@@ -76,7 +76,7 @@ public class Server {
                     .build();
             // Create a PaymentIntent with the order amount and currency
             PaymentIntent intent = PaymentIntent.create(createParams);
-            // Send public key and PaymentIntent details to client
+            // Send publishable key and PaymentIntent details to client
             return gson.toJson(new CreatePaymentResponse(dotenv.get("STRIPE_PUBLISHABLE_KEY"), intent.getClientSecret()));
         });
 

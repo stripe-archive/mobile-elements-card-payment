@@ -1,9 +1,6 @@
 # iOS Client
 
-To run this app, you'll need to first run the sample server locally.
-Follow the "How to run locally" instructions in the root directory's README.md to get started.
-Once you've started the server, open http://localhost:4242 in your browser to check that the
-server is running locally.
+Before running this app, create an `.env` file and run the sample server by following the instructions [here](https://github.com/stripe-samples/mobile-elements-card-payment#how-to-run)
 
 After running the sample server:
 

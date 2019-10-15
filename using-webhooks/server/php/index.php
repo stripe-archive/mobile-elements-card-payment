@@ -56,7 +56,7 @@ $app->post('/create-payment-intent', function (Request $request, Response $respo
       "currency" => $body->currency
     ]);
     
-    // Send public key and PaymentIntent details to client
+    // Send publishable key and PaymentIntent details to client
     return $response->withJson(array('publishableKey' => $pub_key, 'clientSecret' => $payment_intent->client_secret));
 });
 

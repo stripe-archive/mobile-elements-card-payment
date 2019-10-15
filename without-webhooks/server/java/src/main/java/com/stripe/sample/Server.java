@@ -128,7 +128,7 @@ public class Server {
 
         get("/stripe-key", (request, response) -> {
             response.type("application/json");
-            // Send public key to client
+            // Send publishable key to client
             return gson.toJson(new StripeKeyResponse(dotenv.get("STRIPE_PUBLISHABLE_KEY")));
         });
 

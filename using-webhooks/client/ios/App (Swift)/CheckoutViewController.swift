@@ -10,11 +10,8 @@ import UIKit
 import Stripe
 
 /**
- * To run this app, you'll need to first run the sample server locally.
- * Follow the "How to run locally" instructions in the root directory's README.md to get started.
- * Once you've started the server, open http://localhost:4242 in your browser to check that the
- * server is running locally.
- * After verifying the sample server is running locally, build and run the app using the iOS simulator.
+ * This example collects card payments, implementing the guide here: https://stripe.com/docs/payments/accept-a-payment#ios
+ * To run this app, follow the steps here https://github.com/stripe-samples/mobile-elements-card-payment#how-to-run
  */
 let BackendUrl = "http://127.0.0.1:4242/"
 
@@ -94,6 +91,7 @@ class CheckoutViewController: UIViewController {
             print("Created PaymentIntent")
             self?.paymentIntentClientSecret = clientSecret
             // Configure the SDK with your Stripe publishable key so that it can make requests to the Stripe API
+            // For added security, our sample app gets the publishable key from the server
             Stripe.setDefaultPublishableKey(publishableKey)
         })
         task.resume()

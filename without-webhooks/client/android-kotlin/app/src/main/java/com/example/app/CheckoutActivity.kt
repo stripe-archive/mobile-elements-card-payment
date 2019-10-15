@@ -28,17 +28,13 @@ import com.stripe.android.view.CardInputWidget
 class CheckoutActivity : AppCompatActivity() {
 
     /**
-     * To run this app, you'll need to first run the sample server locally.
-     * Follow the "How to run locally" instructions in the root directory's README.md to get started.
-     * Once you've started the server, open http://localhost:4242 in your browser to check that the
-     * server is running locally.
-     * After verifying the sample server is running locally, build and run the app using the
-     * Android emulator.
+     * This example collects card payments, implementing the guide here: https://stripe.com/docs/payments/accept-a-payment-synchronously#android
+     *
+     * To run this app, follow the steps here: https://github.com/stripe-samples/mobile-elements-card-payment#how-to-run
      */
     // 10.0.2.2 is the Android emulator's alias to localhost
     private val backendUrl = "http://10.0.2.2:4242/"
     private val httpClient = OkHttpClient()
-    private lateinit var publishableKey: String
     private lateinit var stripe: Stripe
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +69,7 @@ class CheckoutActivity : AppCompatActivity() {
 
     private fun startCheckout() {
         val weakActivity = WeakReference<Activity>(this)
-        // Load Stripe key from the server
+        // For added security, our sample app gets the publishable key from the server
         val request = Request.Builder()
             .url(backendUrl + "stripe-key")
             .get()
@@ -91,11 +87,9 @@ class CheckoutActivity : AppCompatActivity() {
                         val responseData = response.body?.string()
                         var json = JSONObject(responseData)
 
-                        // The response from the server includes the Stripe public key and
-                        // PaymentIntent details.
-                        publishableKey = json.getString("publishableKey")
+                        var publishableKey = json.getString("publishableKey")
 
-                        // Use the public key from the server to initialize the Stripe instance.
+                        // Configure the SDK with your Stripe publishable key so that it can make requests to the Stripe API
                         stripe = Stripe(applicationContext, publishableKey)
                     }
                 }

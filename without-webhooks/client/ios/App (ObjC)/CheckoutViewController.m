@@ -10,11 +10,9 @@
 #import <Stripe/Stripe.h>
 
 /**
-* To run this app, you'll need to first run the sample server locally.
-* Follow the "How to run locally" instructions in the root directory's README.md to get started.
-* Once you've started the server, open http://localhost:4242 in your browser to check that the
-* server is running locally.
-* After verifying the sample server is running locally, build and run the app using the iOS simulator.
+* This example collects card payments, implementing the guide here: https://stripe.com/docs/payments/accept-a-payment-synchronously#ios
+* 
+* To run this app, follow the steps here https://github.com/stripe-samples/mobile-elements-card-payment#how-to-run
 */
 NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 
@@ -74,7 +72,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
 }
 
 - (void)startCheckout {
-    // Load Stripe key from the server
+    // For added security, our sample app gets the publishable key from the server
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@stripe-key", BackendUrl]];
     NSMutableURLRequest *request = [[NSURLRequest requestWithURL:url] mutableCopy];
     [request setHTTPMethod:@"GET"];
@@ -88,6 +86,7 @@ NSString *const BackendUrl = @"http://127.0.0.1:4242/";
         }
         else {
             NSLog(@"Loaded Stripe key");
+            // Configure the SDK with your Stripe publishable key so that it can make requests to the Stripe API
             NSString *publishableKey = json[@"publishableKey"];
             [Stripe setDefaultPublishableKey:publishableKey];
         }

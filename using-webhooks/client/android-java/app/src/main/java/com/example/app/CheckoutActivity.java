@@ -39,12 +39,10 @@ import okhttp3.Response;
 
 public class CheckoutActivity extends AppCompatActivity {
     /**
-     * To run this app, you'll need to first run the sample server locally.
-     * Follow the "How to run locally" instructions in the root directory's README.md to get started.
-     * Once you've started the server, open http://localhost:4242 in your browser to check that the
-     * server is running locally.
-     * After verifying the sample server is running locally, build and run the app using the
-     * Android emulator.
+     * 
+     * This example collects card payments, implementing the guide here: https://stripe.com/docs/payments/accept-a-payment#android
+     *
+     * To run this app, follow the steps here: https://github.com/stripe-samples/mobile-elements-card-payment#how-to-run
      */
     // 10.0.2.2 is the Android emulator's alias to localhost
     private static final String BACKEND_URL = "http://10.0.2.2:4242/";
@@ -127,10 +125,11 @@ public class CheckoutActivity extends AppCompatActivity {
 
         // The response from the server includes the Stripe publishable key and
         // PaymentIntent details.
+        // For added security, our sample app gets the publishable key from the server
         String stripePublishableKey = responseMap.get("publishableKey");
         paymentIntentClientSecret = responseMap.get("clientSecret");
 
-        // Use the key from the server to initialize the Stripe instance.
+        // Configure the SDK with your Stripe publishable key so that it can make requests to the Stripe API
         stripe = new Stripe(
                 getApplicationContext(),
                 Objects.requireNonNull(stripePublishableKey)

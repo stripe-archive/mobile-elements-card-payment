@@ -39,7 +39,7 @@ def calculate_order_amount(items):
 
 @app.route('/stripe-key', methods=['GET'])
 def fetch_key():
-    # Send public key to client
+    # Send publishable key to client
     return jsonify({'publishableKey': os.getenv('STRIPE_PUBLISHABLE_KEY')})
 
 
